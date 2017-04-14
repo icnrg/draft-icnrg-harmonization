@@ -1,16 +1,16 @@
 # Introduction
 
-Content-Centric Networking version 1.0 (CCNx 1.0) and Named Data Networking (NDN) are two prominent realizations of the Information-Centric Networking (ICN) architecture.
+Content-Centric Networking version 1.0 (CCNx 1.0) and Named Data Networking (NDN) are two prominent realizations of the Information-Centric Networking (ICN) vision.
 Both realizations share the same roots of Content Centric Networking (CCN) idea introduced by [Van Jacobson in 2006](http://www.ccnx.org/395/1/van-jacobsen-at-google/).
 <!-- CCNx -->
 <!-- Up until version 0.8, CCNx was a prototype of the NDN/CCN architecture. -\-> -->
-CCNx was the name for the software router and libraries developed and maintained by PARC, realizing a version of CCN/NDN protocol in versions 0.1-0.8, later referred as CCNx 0.x in this draft.
-NDN (Named Data Networking) name was introduced as part of NSF FIA project and effectively became a new generalized name for overall CCN architecture.
+CCNx, from versions 0.1 to 0.8 (referred to as CCNx 0.x in the rest of this draft), was the name of the software router and libraries developed and maintained by PARC.
+Although the protocol architecture was renamed to NDN when the effort got funded under NSF’s Future Internet Architecture (FIA) program in 2010, during its first two years, the NDN project used CCNx 0.x as its implementation codebase.  
 
-Starting 2012, because of multiple reasons, including [patent concerns](https://named-data.net/wp-content/uploads/2016/08/NDN-IPR.pdf), CCNx and NDN communities to some extent diverge.
-PARC introduced a significantly re-designed version of CCNx realization (CCNx 1.0) and NDN team (participants of NSF FIA projects and other community collaborators) pushed forward an updated version of the NDN architecture, highlighting value of [protocol design principles](https://named-data.net/project/ndn-design-principles/).
+However the CCNx and NDN efforts started parting the way in late 2012 (interested readers may take a look of [the related causes](https://named-data.net/wp-content/uploads/2016/08/NDN-IPR.pdf).
+PARC introduced a significantly re-designed, non backward compatible protocol CCNx 1.0. In parallel the NDN project team continued to refine the NDN protocol, which is derived from the original CCNx 0.x design, based on experimentation results and the [NDN protocol design principles](https://named-data.net/project/ndn-design-principles/).
 
-The objective of this document is to summarize the shared commonalities between the latest versions of CCNx and NDN realizations, identify points of divergence, and documents reasons for the divergence.
+The objective of this document is to summarize the shared commonalities between the latest versions of CCNx and NDN realizations, identify points of divergence, and documents reasons behind these different design choices.
 The identified commonalities and differences serve as a starting point to an open discussion to determine possibility to "harmonize" the two realizations, and if determined so, provide a general guidance on how to achieve it.
 
 # Terminology
