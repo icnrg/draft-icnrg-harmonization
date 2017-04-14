@@ -25,9 +25,9 @@
 <!-- - **0.8.1**: Oct 9, 2013  -->
 <!-- - **0.8.2**: Apr 1, 2014  -->
 
-## CCNx versions 0.1 (2009) - 0.8 (2014): Origin and Point of Commonality
+## CCNx 0.x: Origin and Point of Commonality
 
-CCNx versions 0.1 to 0.8 was a prototype implementation of at the time common CCN/NDN architecture.
+<!-- CCNx versions 0.1 to 0.8 was a prototype implementation of at the time common CCN/NDN architecture. -->
 
 (Rewrite in progress, to follow this structure)
 

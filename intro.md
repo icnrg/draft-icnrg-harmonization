@@ -1,8 +1,10 @@
 # Introduction
 
 Content-Centric Networking version 1.0 (CCNx 1.0) and Named Data Networking (NDN) are two prominent realizations of the Information-Centric Networking (ICN) architecture.
-Both realizations share the same roots of Content Centric Networking (CCN) idea introduced by [Van Jacobson in 2006](http://www.ccnx.org/395/1/van-jacobsen-at-google/) and up until version CCNx 0.8, both realization were exactly the same.
-CCNx was the name for the software router and libraries developed and maintained by PARC.
+Both realizations share the same roots of Content Centric Networking (CCN) idea introduced by [Van Jacobson in 2006](http://www.ccnx.org/395/1/van-jacobsen-at-google/).
+<!-- CCNx -->
+<!-- Up until version 0.8, CCNx was a prototype of the NDN/CCN architecture. -\-> -->
+CCNx was the name for the software router and libraries developed and maintained by PARC, realizing a version of CCN/NDN protocol in versions 0.1-0.8, later referred as CCNx 0.x in this draft.
 NDN (Named Data Networking) name was introduced as part of NSF FIA project and effectively became a new generalized name for overall CCN architecture.
 
 Starting 2012, because of multiple reasons, including [patent concerns](https://named-data.net/wp-content/uploads/2016/08/NDN-IPR.pdf), CCNx and NDN communities to some extent diverge.
