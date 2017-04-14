@@ -7,6 +7,7 @@
 <!ENTITY misc        PUBLIC '' 'misc.xml'>
 
 <!ENTITY rfc.2119    PUBLIC '' '../bib/reference.RFC.2119.xml'>
+<!ENTITY draft.terminology PUBLIC '' '../bib/reference.I-D.draft-wissingh-icnrg-terminology-00.xml'>
 ]>
 <?rfc toc="yes"?>
 <?rfc symrefs="yes"?>
@@ -62,7 +63,8 @@
 
   <back>
     <references title="Normative References">
-        &rfc.2119;
+      &rfc.2119;
+      &draft.terminology;
     </references>
 
     <!-- <references title="Informative  References"> -->
