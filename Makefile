@@ -10,6 +10,9 @@ all: build $(NAME)-$(REVISION).txt $(NAME)-$(REVISION).html
 build:
 	mkdir build
 
+view:
+	open $(NAME)-$(REVISION).html
+
 build/template.xml: template.xml
 	sed -e "s/@@REVISION@@/$(REVISION)/g" template.xml > build/template.xml
 

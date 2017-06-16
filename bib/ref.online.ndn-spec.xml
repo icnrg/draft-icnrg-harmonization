@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference anchor='ndn-spec'>
+  <front>
+    <title abbrev='NDN Spec'>NDN Packet Format Specification 0.2-2 documentation</title>
+    <author surname='NDN Team' fullname='NDN Team'>
+      <organization></organization>
+      <address>
+        <postal><street></street></postal>
+        <email></email>
+      </address>
+    </author>
+    <date year='2017' month='June' />
+    <area></area>
+    <keyword></keyword>
+  </front>
+
+</reference>

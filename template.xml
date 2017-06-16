@@ -8,6 +8,8 @@
 
 <!ENTITY rfc.2119    PUBLIC '' '../bib/reference.RFC.2119.xml'>
 <!ENTITY draft.terminology PUBLIC '' '../bib/reference.I-D.draft-wissingh-icnrg-terminology-00.xml'>
+<!ENTITY ndn.spec PUBLIC '' '../bib/ref.online.ndn-spec.xml'>
+
 ]>
 <?rfc toc="yes"?>
 <?rfc symrefs="yes"?>
@@ -20,7 +22,7 @@
 
 <rfc ipr="trust200902" category="info" docName="draft-icnrg-harmonization-@@REVISION@@">
   <front>
-    <title abbrev="NDN and CCNx 1.0 Design Differences">Design Choices and Differences for NDN and CCNx 1.0 Implementations of Information-Centric Networking</title>
+    <title abbrev="NDN and CICN Design Differences">Design Choices and Differences for NDN and CICN (CCNx 1.0) Implementations of Information-Centric Networking</title>
 
     <author initials="F." surname="Lastname"
             fullname="Firstname Lastname">
@@ -65,6 +67,7 @@
     <references title="Normative References">
       &rfc.2119;
       &draft.terminology;
+      &ndn.spec;
     </references>
 
     <!-- <references title="Informative  References"> -->

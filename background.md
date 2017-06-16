@@ -1,51 +1,97 @@
 # Background
 
-**TODO**: Brief history of CCN, and design and development of CCNx before and during NDN project.
-
-<!-- CCNx Release History: -->
-
-<!-- - **0.1.0**: Sep 21, 2009 -->
-<!-- - **0.1.1**: Sep 25, 2009 -->
-<!-- - **0.1.2**: Nov 3, 2009  -->
-<!-- - **0.2.0**: Dec 1, 2009  -->
-<!-- - **0.3.0**: Nov 4, 2010  -->
-<!-- - **0.4.0**: May 13, 2011 -->
-<!-- - **0.4.1**: Sep 14, 2011 -->
-<!-- - **0.4.2**: Dec 8, 2011  -->
-<!-- - **0.5.0**: Feb 16, 2012 -->
-<!-- - **0.5.1**: Mar 9, 2012  -->
-<!-- - **0.5.2**: May 8, 2012  -->
-<!-- - **0.6.0**: Apr 22, 2012 -->
-<!-- - **0.6.1**: Aug 21, 2012 -->
-<!-- - **0.6.2**: Oct 2, 2012  -->
-<!-- - **0.7.0**: Dec 8, 2012  -->
-<!-- - **0.7.1**: Feb 4, 2013  -->
-<!-- - **0.7.2**: May 19, 2013 -->
-<!-- - **0.8.0**: Aug 12, 2013 -->
-<!-- - **0.8.1**: Oct 9, 2013  -->
-<!-- - **0.8.2**: Apr 1, 2014  -->
+<!-- **TODO**: Brief history of CCN, and design and development of CCNx before and during NDN project. -->
 
 ## CCNx 0.x: Origin and Point of Commonality
 
-<!-- CCNx versions 0.1 to 0.8 was a prototype implementation of at the time common CCN/NDN architecture. -->
 
-(Rewrite in progress, to follow this structure)
+### Packet Format
 
+<!-- CCNb (binary-encoded XML) encoding -->
 
-- Packet format
+CCNx protocol defined a variable-length encoding using binary XML encoding (ccnb).
+With this encoding, all messages are defined by XML schemas and encoded with explicitly identified field boundaries.
+This design permits field values of arbitrary length, optional fields that consume no packet space when omitted, and nested structures.
 
-- Packet types
+### Name
 
-- Node model
+CCNx 0.x defined a hierarchical naming structure, with each component of the name defined as an arbitrary sequence of zero or more bytes.
+Encoding of the name followed the overall message structure, i.e., represented on wire as a binary-encoded XML.
 
-  * Data structures
+In addition to explicitly defined sequence of name components, each Content Object message included an additional implicitly appended name component: the implicit digest.
+This components contains raw bytes of the SHA-256 digest of the entire ccnb-encoded Content Object.
 
-  * Forwarding behavior)
+**TODO** Decide to use "full"/"exact" name terminology here or not.
 
-    - Interest processing
+### Packet Types
 
-    - Data processing
+CCNx 0.x defined two packet types (messages): Interest and Data (also called Content or Content Object).
 
+The **Interest** message is used to request data by name: either exact or full name of the data to be retrieved or data name prefix along with optional "selectors" to restrict what data is acceptable from the collection named by the prefix.
+
+The name was defined as the only required element, with other elements falling into four categories:
+
+- the so called selectors, to qualify the ContentObjects that may match the Interest: `MinSuffixComponents`, `MaxSuffixComponents`, `PublisherPublicKeyDigest`, and `Exclude`;
+- limiters of where the answer might come from: `AnswerOriginKind`, `Scope`, `InterestLifetime`;
+- advisers of what to send when there are multiple ContentObjects that match: `ChildSelector`; and
+- elements for duplicate suppression: `Nonce`.
+
+The **Content Object** is self-contained named and signed piece of payload.
+Formally, a Content Object is an immutable binding of a name, a publisher, and a chunk of data.
+Every Content Object message is required to contain a valid signature, type of which defined as part of the `SignedInfo` field in form of OID identifier.
+
+The structure of the Content Object was defined as `Signature`, `Name`, `SignedInfo`, and `Content`.
+The `Signature` fields carried cryptographic digest and public key signature (plus "witness" for special type of Merkle-tree group signature), computed over the rest of the ccnb-encoded part of the message.
+The `SignedInfo` allowed to include:
+
+- `PublisherPublicKeyDigest` (digest of the public key to verify the signature),
+- `Timestamp` (specially encoded timestamp value of when message was created),
+- `Type` (3-byte identification of the payload with several defined values, including DATA, ENCR, GONE, KEY/, LINK, and NACK),
+- `FreshnessSeconds` (how many seconds a node should wait after the arrival of this ContentObject before marking it as stale),
+- `FinalBlockID` (the trailing name component in the last Content Object of a sequence of fragments),
+- `KeyLocator` (key bits or name of the public key to verify the signature), and
+- `ExtOpt` (carrier for any additional application-defined meta-information).
+
+CCNx 0.x also defined a concept of Content Object staleness.
+Any newly received (or re-retrieved) Content Object was considered "not stale" for the duration limited by `FreshnessSeconds` (always not stale if Content Object does not carry the field).
+"Stale" content objects are still valid data, but they are not eligible to be matched with Interests, unless "answer may be stale" bit (0x4) set in the `AnswerOriginKind` element.
+
+### Forwarding Behavior
+
+A CCNx 0.8 specification defined the following forwarder behavior for processing of Interest and Content Object (Data) packets:
+
+- Interest Processing
+
+    - Check for duplicate Nonce and drop if found
+    - Try to aggregate the Interest in the Pending Interest Table (PIT)
+
+        - If aggregated, done
+
+    - Try to satisfy the Interest from the local Content Store (cache).
+
+        - If a match found, as described above, return the corresponding Content Object
+
+    - Lookup in the Forwarding Information Base (FIB)
+
+        - If no match, drop the Interest
+        - If forwarded, record PIT state
+        - Forward the Interest as per the FIB lookup
+
+- Interest Response Timeout
+
+    - If this is the 1st timeout, lookup the 2nd-best FIB entry and if it exists, forward, otherwise done.
+    - If this is the 2nd timeout, lookup all remaining feasible FIB entries and send to all
+    - Beyond this time, keep the Interest until Interest Lifetime expires
+
+- Content Object processing
+
+    - Find all Interests in the PIT that the Content Object satisfies according to the matching rules described above.
+    - Forward the Content Object along those reverse paths, then remove those PIT entries.
+    - If it matched at least one PIT entry, put the Content Object in the Content Store
+
+The Interest processing path in a forwarder follows a two-best route then flood strategy.  Each forwarder for each name prefix in its FIB keeps an estimate of the round-trip time.  If an Interest goes unsatisfied longer than this estimate, it follows the Interest Response Timeout processing path.  The CCNx 0.x forwarder uses a kind of information foraging approach.  It will steadily decrease the RTT estimate used on the best path until an Interest goes unsatisfied then reset to the true estimate.  This means about every 8th Interest will trigger a send on the 2nd best path.  This infrequent use of the 2nd best path updates that path's RTT estimate.  If neither the best path nor second best path yields a response, the forwarder will broadcast the Interest any remaining feasible FIB entries.
+
+The CCNx 0.x forwarder uses a set of flags on FIB entries called Child Inherit and Forward Capture.  Normally, the FIB is matched on a strict longest matching prefix.  If the Child Inherit flag is set on a shorter prefix, it indicates that shorter prefixes should be considered feasible in addition to longer prefixes.  The Forward Capture flag on a shorter prefix indicates that no longer prefix should be used (it avoids another process from "capturing" the FIB entry by making a longer entry).  The use of these two flags has a strong interaction with the two-best route then flood forwarding strategy as they either expand or contract the set of feasible routes used in Interest forwarding and Interest timeout retransmission.
 
 <!-- CCNx protocol which provides location-independent delivery services for named data packets. -->
 <!-- The services include multihop forwarding for end-to-end delivery, flow control, transparent and automatic multicast delivery using buffer storage available in the network, loop-free multipath forwarding, verification of content integrity regardless of delivery path, and carriage of arbitrary application data. Applications run the CCNx protocol over some lower-layer communications service capable of transmitting packets. There are no restrictions on the nature of the lower-layer service: it may be a physical transport or another network or transport protocol. For example, applications will typically run the CCNx protocol on top of UDP to take advantage of existing IP connectivity. Since content is named independent of location in the CCNx protocol, it may also be preserved indefinitely in the network, providing effectively a form of distributed filesystem service. -->
@@ -106,42 +152,9 @@
 
 <!-- The FaceID field is used by an application to request the Interest be sent to a specific peer (or group).  It only has significance on the origin system to bypass normal forwarding table lookup. -->
 
-### Forwarder Behavior
+<!-- ### Forwarder Behavior -->
 
-A CCNx 0.8 forwarder followed these steps to forward Interests and Content Objects:
 
-- Interest Processing
-
-    - Check for duplicate Nonce and drop if found
-    - Try to aggregate the Interest in the Pending Interest Table (PIT)
-
-        - If aggregated, done
-
-    - Try to satisfy the Interest from the local Content Store (cache).
-
-        - If a match found, as described above, return the corresponding Content Object
-
-    - Lookup in the Forwarding Information Base (FIB)
-
-        - If no match, drop the Interest
-        - If forwarded, record PIT state
-        - Forward the Interest as per the FIB lookup
-
-- Interest Response Timeout
-
-    - If this is the 1st timeout, lookup the 2nd-best FIB entry and if it exists, forward, otherwise done.
-    - If this is the 2nd timeout, lookup all remaining feasible FIB entries and send to all
-    - Beyond this time, keep the Interest until Interest Lifetime expires
-
-- Content Object processing
-
-    - Find all Interests in the PIT that the Content Object satisfies according to the matching rules described above.
-    - Forward the Content Object along those reverse paths, then remove those PIT entries.
-    - If it matched at least one PIT entry, put the Content Object in the Content Store
-
-The Interest processing path in a forwarder follows a two-best route then flood strategy.  Each forwarder for each name prefix in its FIB keeps an estimate of the round-trip time.  If an Interest goes unsatisfied longer than this estimate, it follows the Interest Response Timeout processing path.  The CCNx 0.x forwarder uses a kind of information foraging approach.  It will steadily decrease the RTT estimate used on the best path until an Interest goes unsatisfied then reset to the true estimate.  This means about every 8th Interest will trigger a send on the 2nd best path.  This infrequent use of the 2nd best path updates that path's RTT estimate.  If neither the best path nor second best path yields a response, the forwarder will broadcast the Interest any remaining feasible FIB entries.
-
-The CCNx 0.x forwarder uses a set of flags on FIB entries called Child Inherit and Forward Capture.  Normally, the FIB is matched on a strict longest matching prefix.  If the Child Inherit flag is set on a shorter prefix, it indicates that shorter prefixes should be considered feasible in addition to longer prefixes.  The Forward Capture flag on a shorter prefix indicates that no longer prefix should be used (it avoids another process from "capturing" the FIB entry by making a longer entry).  The use of these two flags has a strong interaction with the two-best route then flood forwarding strategy as they either expand or contract the set of feasible routes used in Interest forwarding and Interest timeout retransmission.
 
 <!-- ### Content Store -->
 
@@ -175,12 +188,56 @@ The CCNx 0.x forwarder uses a set of flags on FIB entries called Child Inherit a
 
 ### NDN Evolution
 
-### CCNx 1.0 Evolution
+Based on the common understanding of inefficiency of ccnb packet encoding of CCNx 0.8, in 2013 NDN Team has created, and subsequently revised, an updated protocol specification, based on [Type-Length-Value encoding](#ndn-spec).
+This version kept the properties of the original CCNx, including prefix matching between data and interest packets (in-network name discovery), but also introduced a number of other changes.
+The following list a brief summary of these changes.
 
-The revision of CCNx 0.8 undertaken at PARC beginning in 2013, now called CCNx 1.0, refactored the protocol behavior with the objective to optimize performance and reduce the worst-case computational costs at a forwarder.
+**Name**:
+
+- Name is now represented as a two-level nested TLV, outer TLV and "typed" name components sub-TLVs
+
+- Introduced several generic name component types, including `GenericNameComponent` and `ImplicitSha256Digest`.
+  The latter to disambiguate the trailing implicit digest component of the interest name.
+
+**Interest Packet**:
+
+- `Nonce` is changed from optional to required
+- `PublisherPublicKeyDigest` is replaced by `PublisherPublicKeyLocator`
+- `AnswerOriginKind` is simplified from 4bits to a 1-bit `MustBeFresh` selector
+- `FaceID` has been removed
+- `InterestLifetime` changes the unit to the number of milliseconds
+- Removed Bloom Filter from Exclude
+- Delete deprecated `Scope` guider
+- Changed default semantics of staleness: interest without selectors bring any matching data; if `MustBeFresh` selector is enabled, routers must return only "fresh" matching data.
+- Introduced `ForwardingHint` concept to guide interest forwarding when name cannot be used directly.
+
+**Data Packet**:
+
+- The structure of Data packet is changed to `Name`, `MetaInfo`, `Content`, `Signature{SignatureInfo, SignatureValue}`
+- `PublisherPublicKeyDigest` and `ExtOpt` are removed.
+- `SignedInfo` is renamed to `MetaInfo` and its content was refactored:
+
+    - Three content types, ENCR, GONE, and NACK are removed
+    - `Timestamp` is removed
+    - `KeyLocator` is moved to be inside the `Signature` (`SignatureInfo`) block
+    - `FreshnessSeconds` is renamed to `FreshnessPeriod` and is expressed in units of milliseconds
+    - `MetaInfo` now allowed to contain application-specific blocks, e.g., to carry timestamp of data production.
+
+**Signature**:
+
+  - `Signature` is moved to the end of Data packet.
+  - `KeyLocator` is moved to be a part of the `SignatureInfo` block and made signature-specific.
+  - Signature type (or signing method information) is expressed as an assigned integer value (with no assumed default), rather than OID.
+  - Added support for hash-only "signature"
+  - Introduction support of new types of signatures, including `SignatureSha256WithEcdsa` (Elliptic Curve Digital Signature Algorithm) and `SignatureHmacWithSha256` (hash-based message authentication code)
+  - `KeyLocatorDigest` renamed to `KeyDigest`
+
+### CICN Evolution
+
+The revision of CCNx 0.8 undertaken at PARC beginning in 2013, now called CICN (previously known as CCNx 1.0), refactored the protocol behavior with the objective to optimize performance and reduce the worst-case computational costs at a forwarder.
 In more details, the changes are described in the next section, the following is a high-level summary:
 
-- Constrained data retrieval only using `exact` or `full` names: such names needs to be communicated to parties by some other means (e.g., using an application-level discovery) or, in case of `exact` names, assigning same names to different pieces of data (different versions of data).
+- Constrained data retrieval only using `exact` or `full` names: such names need to be communicated to parties by some other means (e.g., using an application-level discovery) or, in case of `exact` names, assigning same names to different pieces of data (different versions of data) with time-dependency on the network routers to removing "old" versions from the network.
 
 - Removed `Selectors` and introduced `Restrictors`: `hash restriction` as a replacement of the implicit hash digest name component in CCNx 0.8 and `KeyId` restriction with added semantics to the content store behavior.
 
@@ -191,5 +248,3 @@ In more details, the changes are described in the next section, the following is
 - Removed "Nonce" from Interest
 
 - Introduced "HopLimit"
-
-- TBD
