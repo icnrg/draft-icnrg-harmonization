@@ -1,24 +1,51 @@
 # Discussion of Individual Architecture & Design Commonalities and Differences per NDN and CCNx 1.0 Development paths
 
-... below we take in succession individual topics that capture the points where the differences between the NDN and CCNx 1.0 approaches are relevant and important to discuss.  The topics listed below are taken from our prior discussions and are included for completeness only. We can reorganize, add or delete items as we see fit. The structure of each section will be the same as suggested in 4.1...
+<!-- ... below we take in succession individual topics that capture the points where the differences between the NDN and CCNx 1.0 approaches are relevant and important to discuss.  The topics listed below are taken from our prior discussions and are included for completeness only. We can reorganize, add or delete items as we see fit. The structure of each section will be the same as suggested in 4.1... -->
 
 <!-- ################################################################### -->
 
-## Packet encoding
-
-Use of TLV encodings
+## Encoding
 
 ### NDN
 
-.. Details and motivation...
+Direct change of binary XML encoding to TLV based encoding, with flexible 1-3-5-9-octet format for Type and Length fields.
+Data and Interest packets remained self-contained independent packets/messages.
 
-### 	CCNx 1.0
+Advantages:
 
-CCNx 1.0 uses a TLV packet format.  It allocates 2 bytes for the Type and 2 bytes for the Length (called the "2+2 format").  There are two principle reasons for using a fixed T and L length.  First, it avoids aliases.  For example is a 1-byte "0" the same as a 2-byte "0"?  If so, it means there are multiple representations of the same semantics, so creating packet filters becomes much harder.  If they are not the same, then a parser needs to differentiate them based on length.   The second reason is packet allocation.  Because the length of a L depends on how much is inside it, which might not be known at first, one sometimes needs to reserve space for an L field then come back to fill it in later.  We also believe that a fixed T and L length leads to a much more efficient parser because it does not need to branch on each T and L field.
+- The objective of the flexible encoding format is to ensure the same packet format can be used in all possible network environments, including very constrained IoT and high-performance unconstrained networks, without requiring translation gateways.
 
-The 2+2 format is inefficient bit-wise because many fields are under 255 bytes and we use maybe a dozen types, not thousands of types.  To address this, we have proposed two additional protocols, though these are not part of the standard.  The first is a compression protocol that is more efficient than even a protocol that can use 1 or 2 byte T and L fields (https://www.ietf.org/proceedings/94/slides/slides-94-icnrg-0.pdf).  One reason for this is that in a series of Content Objects, it can compress out other repeated fields, such as parts of the name, long cryptographic key digests, and repeated TLV blocks like the Validation Algorithms section.  The second is an encoding for 802.15.4 (or other small data environments) called the "1+0" TLV format because it uses only 1 byte for both the T and the L in many cases (see https://www.ietf.org/mail-archive/web/icnrg/current/pdfs9ieLPWcJI.pdf).
+Potential drawbacks:
 
-### Analysis
+- More complex processing (direct interpretation of wire-format bytes)
+
+- More complex packet generation (optimal implementation of packet allocation require packet size estimation and backward-direction encoding)
+
+- Number aliasing, if implementations do not enforce smallest-encoding restriction imposed by the NDN's TLV specification.
+
+### CCNx 1.0
+
+Packet changed to include "common" fixed header, packet-type specific fixed header, optional TLV-encoded hop-by-hop headers, TLV-encoded "message" (interest or data).
+Each packet can also include additional trailing TLVs, e.g., to include signature information.
+
+The encoding of `Type` and `Length` field are using a fixed 2-octet encoding.
+A separate specialized IoT version (requires translation) of CCNx 1.0 (?cite?) added a 1-octet encoding of combined T-V fields.
+
+Advantages:
+
+- No number aliasing possible, as the encoding is fixed
+
+- Simplified processing
+
+- Simplified packet generation (still require packet size estimation, but allow both forward and backward encoding)
+
+Potential drawbacks:
+
+- Can encode numbers only up to 65,535, which can be limiting factor for L field in high-performance networks and for T field when assigning custom fields.
+
+- Inefficient bit-wise because many fields are under 255 bytes
+
+- Need for [specialized encoding](https://www.ietf.org/mail-archive/web/icnrg/current/pdfs9ieLPWcJI.pdf) and/or [compression mechanisms](https://www.ietf.org/proceedings/94/slides/slides-94-icnrg-0.pdf) to use in highly MTU-constrained networks (802.15.4, LoRaWAN, etc.)
 
 
 <!-- ################################################################### -->

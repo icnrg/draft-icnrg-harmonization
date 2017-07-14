@@ -125,6 +125,10 @@ The following list is a brief summary of these introduced changes.
 
     * considers removal of `Exclude` and other selectors.
 
+**Packet Types**
+
+- Added `Network NACK` (as part of NDNLP adaptation layer)
+
 **Interest Packet**:
 
 - `Nonce` is changed from optional to required to ensure that loops can be quickly detected and pruned, relaxing requirement for the routing system and critical in ad hoc environments.
@@ -160,6 +164,7 @@ The following list is a brief summary of these introduced changes.
     * `KeyLocator` is moved to be inside the `Signature` (`SignatureInfo`) block
     * `FreshnessSeconds` is renamed to `FreshnessPeriod` and is expressed in units of milliseconds
     * `MetaInfo` now allowed to contain application-specific blocks, e.g., to carry timestamp of data production.
+    * `Timestamp` removed
 
 - As part of ongoing discussion, NDN team considering adding
 
@@ -207,6 +212,10 @@ A separate specialized IoT version (requires translation) of CCNx 1.0 (?cite?) a
 
 - Implicit digest changed from being a part of the name (implicitly added name component, ensuring uniqueness of the full name) to be an independent identifier that can be used as part of "hash restriction".
 
+**Packet Types**
+
+- Added `InterestReturn` packet
+
 **Interest Packet**
 
 - Introduced a "fixed" common header, with optional TLV-encoded hop-by-hop headers (not covered by signature), followed by TLV-encoded Interest message.
@@ -233,9 +242,9 @@ A separate specialized IoT version (requires translation) of CCNx 1.0 (?cite?) a
 
 - Introduced concept of "nameless" objects, which are identified only by their implicit digest
 
-- Added Timestamp
+- Added timestamp after which packet cannot satisfy interests
 
--
+- `FinalBlockID` ?
 
 **Signature**:
 
