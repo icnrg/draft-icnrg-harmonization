@@ -4,46 +4,46 @@
 
 ## CCNx 0.x: Origin and Point of Commonality
 
+A note of notation first: the CCNx 0.x documents use the word “message” to refer to packet.  CCNx 1.0 gives distinctive and different definitions to “messsage” and “packet”.  To avoid confusion, the following uses the word packet in CCNx 0.x description.
 
 ### Packet Format
 
 <!-- CCNb (binary-encoded XML) encoding -->
 
-CCNx protocol defined a variable-length encoding using binary XML encoding (ccnb).
-With this encoding, all messages are defined by XML schemas and encoded with explicitly identified field boundaries.
-This design permits field values of arbitrary length, optional fields that consume no packet space when omitted, and nested structures.
+CCNx 0.x defines a variable-length encoding format using binary XML encoding (ccnb).  This encoding defines all packet formats by XML schemas with explicitly identified field boundaries.  This protocol format design permits field values of arbitrary length, nested structures, and optional fields that consume no packet space when omitted.
 
 ### Name
 
-CCNx 0.x defined a hierarchical naming structure, with each component of the name defined as an arbitrary sequence of zero or more bytes.
-Encoding of the name followed the overall message structure, i.e., represented on wire as a binary-encoded XML.
+CCNx 0.x defines a hierarchical naming structure, each component in a name can be an arbitrary length sequence of zero or more bytes.
+Encoding of the name follows the overall packet format, i.e., represented on wire as binary-encoded XML.
 
-In addition to explicitly defined sequence of name components, each Content Object message included an additional implicitly appended name component: the implicit digest.
-This components contains raw bytes of the SHA-256 digest of the entire ccnb-encoded Content Object.
+In addition to an explicitly defined sequence of name components, the name of each Content Object packet includes an additional implicitly appended name component: the implicit digest.
+This component contains the raw bytes of the SHA-256 digest of the entire ccnb-encoded Content Object.
 
 ### Packet Types
 
-CCNx 0.x defined two packet types (messages): Interest and Data (also called Content or Content Object).
+CCNx 0.x defines two packet types: Interest and Data (also called Content Object).
 
-The **Interest** message is used to request data by name: either exact or full name of the data to be retrieved or data name prefix along with optional "selectors" to restrict what data is acceptable from the collection named by the prefix.
+An **Interest** packet is used to request data by name. The name can be either 
+a prefix, or the exact or full name of the desired data to be retrieved; if the name is a prefix, the Interest may carry optional "selectors" to restrict which content is preferred when multiple pieces of them all fall under the given prefix.
 
-The name was defined as the only required element, with other elements falling into four categories:
+The name is defined as the only required element in an Interest packet; other optional elements that an Interest may carry can be sorted into the following categories:
 
-- the so called selectors, to qualify the ContentObjects that may match the Interest: `MinSuffixComponents`, `MaxSuffixComponents`, `PublisherPublicKeyDigest`, and `Exclude`;
-- limiters of where the answer might come from: `AnswerOriginKind`, `Scope`, `InterestLifetime`;
-- advisers of what to send when there are multiple ContentObjects that match: `ChildSelector`; and
-- elements for duplicate suppression: `Nonce`.
+- a means for detecting duplicate Interest: `Nonce`;
+- limiters on the Interest: `Scope`, `InterestLifetime`;
+- limiters on the answer: `AnswerOriginKind`, `MinSuffixComponents`, `MaxSuffixComponents`, `PublisherPublicKeyDigest`, and `Exclude`;
+- advisers of what to send when there are multiple ContentObjects that satisfy the name carried in an Interest: `ChildSelector` (leftmost, rightmost).
 
 The **Content Object** is self-contained named and signed piece of payload.
 Formally, a Content Object is an immutable binding of a name, a publisher, and a chunk of data.
-Every Content Object message is required to contain a valid signature, type of which defined as part of the `SignedInfo` field in form of OID identifier.
+Every Content Object packet is required to contain a valid signature, type of which defined as part of the `SignedInfo` field in form of OID identifier.
 
 The structure of the Content Object was defined as `Signature`, `Name`, `SignedInfo`, and `Content`.
-The `Signature` fields carried cryptographic digest and public key signature (plus "witness" for special type of Merkle-tree group signature), computed over the rest of the ccnb-encoded part of the message.
+The `Signature` fields carried cryptographic digest and public key signature (plus "witness" for special type of Merkle-tree group signature), computed over the rest of the ccnb-encoded part of the packet.
 The `SignedInfo` allowed to include:
 
 - `PublisherPublicKeyDigest` (digest of the public key to verify the signature),
-- `Timestamp` (specially encoded timestamp value of when message was created),
+- `Timestamp` (specially encoded timestamp value of when packet was created),
 - `Type` (3-byte identification of the payload with several defined values, including DATA, ENCR, GONE, KEY/, LINK, and NACK),
 - `FreshnessSeconds` (how many seconds a node should wait after the arrival of this ContentObject before marking it as stale),
 - `FinalBlockID` (the trailing name component in the last Content Object of a sequence of fragments),
@@ -176,7 +176,7 @@ The following list is a brief summary of these introduced changes.
   - `KeyLocator` is moved to be a part of the `SignatureInfo` block and made signature-specific.
   - Signature type (or signing method information) is expressed as an assigned integer value (with no assumed default), rather than OID.
   - Added support for hash-only "signature"
-  - Introduction support of new types of signatures, including `SignatureSha256WithEcdsa` (Elliptic Curve Digital Signature Algorithm) and `SignatureHmacWithSha256` (hash-based message authentication code)
+  - Introduction support of new types of signatures, including `SignatureSha256WithEcdsa` (Elliptic Curve Digital Signature Algorithm) and `SignatureHmacWithSha256` (hash-based packet authentication code)
   - `KeyLocatorDigest` renamed to `KeyDigest`
 
 ### CCNx 1.0 Changes
@@ -218,7 +218,7 @@ A separate specialized IoT version (requires translation) of CCNx 1.0 (?cite?) a
 
 **Interest Packet**
 
-- Introduced a "fixed" common header, with optional TLV-encoded hop-by-hop headers (not covered by signature), followed by TLV-encoded Interest message.
+- Introduced a "fixed" common header, with optional TLV-encoded hop-by-hop headers (not covered by signature), followed by TLV-encoded Interest packet.
 
 - Introduced "HopLimit" (as part of fixed header)
 
@@ -238,7 +238,7 @@ A separate specialized IoT version (requires translation) of CCNx 1.0 (?cite?) a
 
 **Data Packet**
 
-- Introduced a "fixed" common header, with optional TLV-encoded hop-by-hop headers (not covered by signature), followed by TLV-encoded Interest message.
+- Introduced a "fixed" common header, with optional TLV-encoded hop-by-hop headers (not covered by signature), followed by TLV-encoded Interest packet.
 
 - Introduced concept of "nameless" objects, which are identified only by their implicit digest
 
