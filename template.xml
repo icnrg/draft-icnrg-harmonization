@@ -22,7 +22,7 @@
 
 <rfc ipr="trust200902" category="info" docName="draft-icnrg-harmonization-@@REVISION@@">
   <front>
-    <title abbrev="NDN and CICN Design Differences">Design Choices and Differences for NDN and CICN (CCNx 1.0) Implementations of Information-Centric Networking</title>
+    <title abbrev="NDN and CCNx 1.0 Design Differences">Design Choices and Differences for NDN and CCNx 1.0 Implementations of Information-Centric Networking</title>
 
     <author initials="F." surname="Lastname"
             fullname="Firstname Lastname">
