@@ -4,7 +4,7 @@
 
 ## CCNx 0.x: Origin and Point of Commonality
 
-A note of notation first: the CCNx 0.x documents use the word “message” to refer to packet.  CCNx 1.0 gives distinctive and different definitions to “messsage” and “packet”.  To avoid confusion, the following uses the word packet in CCNx 0.x description.
+A note of notation first: the CCNx 0.x documents use the word “message" to refer to packet.  CCNx 1.0 gives distinctive and different definitions to “messsage" and “packet".  To avoid confusion, the following uses the word packet in CCNx 0.x description.
 
 ### Packet Format
 
@@ -24,7 +24,7 @@ This component contains the raw bytes of the SHA-256 digest of the entire ccnb-e
 
 CCNx 0.x defines two packet types: Interest and Data (also called Content Object).
 
-An **Interest** packet is used to request data by name. The name can be either 
+An **Interest** packet is used to request data by name. The name can be either
 a prefix, or the exact or full name of the desired data to be retrieved; if the name is a prefix, the Interest may carry optional "selectors" to restrict which content is preferred when multiple pieces of them all fall under the given prefix.
 
 The name is defined as the only required element in an Interest packet; other optional elements that an Interest may carry can be sorted into the following categories:
@@ -80,31 +80,31 @@ A CCNx 0.8 specification defines the following forwarder behavior for processing
 - Interest Response Timeout
 
     - If this is the 1st timeout, lookup the 2nd-best FIB entry and if it exists, forward, otherwise done.
-    <!-- LZ: what does “done” mean?  -->
+    <!-- LZ: what does "done" mean?  -->
     - If this is the 2nd timeout, lookup all remaining feasible FIB entries and send to all
     - Beyond this time, keep the Interest until Interest Lifetime expires
-    <!-- LZ: what does “Beyond this time” mean? what is this time? -->
-    
+    <!-- LZ: what does "Beyond this time" mean? what is this time? -->
+
 - Content Object processing
 
     - Find all Interests in the PIT that the Content Object satisfies according to the matching rules described above.
-    
+
     - Forward the Content Object along each of those reverse paths, then remove those PIT entries.
-    
+
     - If it matched at least one PIT entry, put the Content Object in the Content Store.
 
-The Interest processing path in a forwarder follows a “two-best route then flood” strategy.  
-Each forwarder for each name prefix in its FIB keeps an estimate of the round-trip time.  If an Interest goes unsatisfied longer than this estimate, it follows the Interest Response Timeout processing path.  
+The Interest processing path in a forwarder follows a "two-best route then flood" strategy.
+Each forwarder for each name prefix in its FIB keeps an estimate of the round-trip time.  If an Interest goes unsatisfied longer than this estimate, it follows the Interest Response Timeout processing path.
 The forwarder uses a kind of information foraging approach.  It steadily decreases the RTT estimate on the best path after each successful data retrieval until an Interest goes unsatisfied, then reset to the true estimate.
-<!-- LZ: 2 problems here: first, content object processing steps do not mention about RTT reduction; second, where comes this “true estimate” ? 
-Also, where comes this “every 8th Interest” mentioned below?  No mentioning on how much to reduce RTT -->
+<!-- LZ: 2 problems here: first, content object processing steps do not mention about RTT reduction; second, where comes this "true estimate" ?
+Also, where comes this "every 8th Interest" mentioned below?  No mentioning on how much to reduce RTT -->
 This means about every 8th Interest will trigger a send on the 2nd best path.  This infrequent use of the 2nd best path updates that path's RTT estimate.  If neither the best path nor second best path yields a response, the forwarder will broadcast the Interest to all remaining feasible FIB entries, if any exists.
 <!-- LZ: what to do in case of only two feasible FIB entries? -->
-<!-- LZ: the description is too “mechanical”; need to spell out the intension behind the design: a heuristic implementation for resilient forwarding, take advantage of the fact Interest packets should not loop -->
+<!-- LZ: the description is too "mechanical"; need to spell out the intension behind the design: a heuristic implementation for resilient forwarding, take advantage of the fact Interest packets should not loop -->
 
 The CCNx 0.x forwarder uses a set of flags on FIB entries called Child Inherit and Forward Capture.  By default, the FIB matching takes a strict longest prefix matching approach.  If the Child Inherit flag is set on a shorter prefix, it indicates that shorter prefixes should be considered equally feasible as the longer matching prefixes.  The Forward Capture flag on a shorter prefix indicates that no longer prefix should be used (it avoids another process from "capturing" the FIB entry by making a longer entry).
 <!-- LZ: do you mean that it avoids any longer FIB entries from capturing the Interest? -->
-The use of these two flags has a strong interaction with the “two-best route then flood” forwarding strategy, as they either expand or contract the set of feasible routes used in Interest forwarding and Interest timeout retransmission.
+The use of these two flags has a strong interaction with the "two-best route then flood" forwarding strategy, as they either expand or contract the set of feasible routes used in Interest forwarding and Interest timeout retransmission.
 
 ## Summary of Changes
 
@@ -137,10 +137,10 @@ The following list is a brief summary of the changes to CCNx 0.8 made by the NDN
 
     * introducing other general-use name component types, such as `Number`, `Timestamp`, and a few others
     <!-- LZ: I had thought we introduced this a few years back -->
-    
+
     * changes the Interest-Data matching semantics from matching one interest to zero or multiple data packets (data matches all pending interests with name that is prefix of data and selectors are satisfied), to matching zero or the exact interest which retrieved the data packet (through the use of an "Interest Digest" mechanism).  Note that latter preserves prefix match between interests and data
     <!-- LZ: this belongs to Interest/Data packet processing; should not be under name? -->
-    
+
 
 **Packet Types**
 
@@ -156,7 +156,7 @@ The following list is a brief summary of the changes to CCNx 0.8 made by the NDN
 
 - Changed `AnswerOriginKind` from 4bits to a 1-bit `MustBeFresh` selector
 
-- Removed `FaceID` 
+- Removed `FaceID`
 <!-- LZ: I cannot recall this: what is the reason behind this change? -->
 
 - Changed `InterestLifetime` unit from second to milliseconds
@@ -169,12 +169,12 @@ The following list is a brief summary of the changes to CCNx 0.8 made by the NDN
 
 - Introduced `ForwardingHint` concept to guide interest forwarding when name cannot be used directly.
 
-- As part of ongoing research, NDN team is considering 
+- As part of ongoing research, NDN team is considering
 
     * the addition of a `Payload` field, with requirement for applications to ensure name uniqueness for Interests carrying different payload, e.g., by adding hash of the payload
 
     * the removal of Interest selectors including "MinSuffixComponents", "MaxSuffixComponents", "PublisherPublicKeyDigest",  "ChildSelector" (leftmost, rightmost), and "Exclude".
-    
+
 **Data Packet**:
 
 - The structure of Data packet is changed to `Name`, `MetaInfo`, `Content`, `Signature{SignatureInfo, SignatureValue}`
