@@ -1,0 +1,1120 @@
+
+
+
+
+Information-Centric Networking Research Group (ICNRG)        F. Lastname
+Internet-Draft                                               Affiliation
+Intended status: Informational                             July 14, 2017
+Expires: January 15, 2018
+
+
+ Design Choices and Differences for NDN and CCNx 1.0 Implementations of
+                     Information-Centric Networking
+                      draft-icnrg-harmonization-00
+
+Abstract
+
+   The purpose of this draft is to document identified commonalities and
+   differences between the architectural design choices of NDN and CCNx
+   1.0, and to describe the rationales underlying the choices.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at http://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on January 15, 2018.
+
+Copyright Notice
+
+   Copyright (c) 2017 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents
+   (http://trustee.ietf.org/license-info) in effect on the date of
+   publication of this document.  Please review these documents
+   carefully, as they describe your rights and restrictions with respect
+   to this document.  Code Components extracted from this document must
+   include Simplified BSD License text as described in Section 4.e of
+   the Trust Legal Provisions and are provided without warranty as
+   described in the Simplified BSD License.
+
+
+
+
+Lastname                Expires January 15, 2018                [Page 1]
+
+Internet-Draft     NDN and CCNx 1.0 Design Differences         July 2017
+
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
+   2.  Terminology . . . . . . . . . . . . . . . . . . . . . . . . .   3
+   3.  Background  . . . . . . . . . . . . . . . . . . . . . . . . .   3
+     3.1.  CCNx 0.x: Origin and Point of Commonality . . . . . . . .   3
+       3.1.1.  Packet Format . . . . . . . . . . . . . . . . . . . .   3
+       3.1.2.  Name  . . . . . . . . . . . . . . . . . . . . . . . .   4
+       3.1.3.  Packet Types  . . . . . . . . . . . . . . . . . . . .   4
+       3.1.4.  Forwarding Behavior . . . . . . . . . . . . . . . . .   5
+     3.2.  Summary of Changes  . . . . . . . . . . . . . . . . . . .   7
+       3.2.1.  Protocol Changes Made by the NDN Team . . . . . . . .   7
+       3.2.2.  CCNx 1.0 Changes  . . . . . . . . . . . . . . . . . .  10
+   4.  Discussion of Individual Architecture & Design Commonalities
+       and Differences per NDN and CCNx 1.0 Development paths  . . .  12
+     4.1.  Packet Structure  . . . . . . . . . . . . . . . . . . . .  12
+     4.2.  Packet Encoding . . . . . . . . . . . . . . . . . . . . .  14
+     4.3.  Naming  . . . . . . . . . . . . . . . . . . . . . . . . .  15
+     4.4.  Data Retrieval  . . . . . . . . . . . . . . . . . . . . .  15
+     4.5.  Opportunistic In-Network Caching  . . . . . . . . . . . .  17
+     4.6.  Forwarding Loop Management  . . . . . . . . . . . . . . .  17
+     4.7.  Data-Centric Security . . . . . . . . . . . . . . . . . .  18
+     4.8.  Fragmentation . . . . . . . . . . . . . . . . . . . . . .  19
+     4.9.  Indirect Data Retrieval . . . . . . . . . . . . . . . . .  19
+   5.  Security Considerations . . . . . . . . . . . . . . . . . . .  19
+   6.  Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .  19
+   7.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  20
+   8.  References  . . . . . . . . . . . . . . . . . . . . . . . . .  20
+     8.1.  Normative References  . . . . . . . . . . . . . . . . . .  20
+     8.2.  URIs  . . . . . . . . . . . . . . . . . . . . . . . . . .  20
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  20
+
+1.  Introduction
+
+   NDN and CCNx 1.0 are two prominent realizations of the Information-
+   Centric Networking (ICN) vision.  Both realizations share the same
+   root of Content Centric Networking (CCN) design introduced by Van
+   Jacobson in 2006 [1].  CCNx, from versions 0.1 to 0.8 (referred to as
+   CCNx 0.x in the rest of this draft), was the name of the software
+   router and libraries developed and maintained by PARC.  Although the
+   protocol architecture was renamed to NDN when the effort got funded
+   under NSF's Future Internet Architecture (FIA) program in 2010 (with
+   PARC being one of the ten funded institutions), the NDN project used
+   CCNx 0.x as its implementation in its first two years of operation,
+   and PARC provided the codebase support to meet the research needs for
+   the rest of the project team.
+
+
+
+
+
+Lastname                Expires January 15, 2018                [Page 2]
+
+Internet-Draft     NDN and CCNx 1.0 Design Differences         July 2017
+
+
+   In October 2012, PARC parted the way from the rest of the NDN project
+   team in (interested readers may take a look at the related causes
+   [2]).  In 2013 PARC introduced a significantly re-designed, non-
+   backward-compatible protocol CCNx 1.0, which was acquired by Cisco
+   Systems in 2017.
+
+   In parallel, the NDN project team has been continuing to refine the
+   NDN protocol derived from the original CCNx 0.x design, guided by the
+   NDN protocol design principles [3] and based on experimentation
+   results.
+
+   The objective of this document is to summarize the shared
+   commonalities between the latest versions of NDN and CCNx 1.0
+   realizations, identify points of divergence, and documents reasons
+   behind these different design choices.  The identified commonalities
+   and differences serve as a starting point to an open discussion to
+   determine possibility to harmonize the two realizations, and if
+   determined so, provide a general guidance on how to achieve it.
+
+2.  Terminology
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+   document are to be interpreted as described in RFC 2119 [RFC2119].
+
+   ICN terms used in this document are interpreted as described in
+   [I-D.wissingh-icnrg-terminology].
+
+3.  Background
+
+3.1.  CCNx 0.x: Origin and Point of Commonality
+
+   A note of notation first: the CCNx 0.x documents use the word
+   "message" to refer to packet.  CCNx 1.0 gives distinctive and
+   different definitions to "messsage" and "packet".  To avoid
+   confusion, the following uses the word packet in CCNx 0.x
+   description.
+
+3.1.1.  Packet Format
+
+   CCNx 0.x defines a variable-length encoding format using binary XML
+   encoding (ccnb).  This encoding defines all packet formats by XML
+   schemas with explicitly identified field boundaries.  This protocol
+   format design permits field values of arbitrary length, nested
+   structures, and optional fields that consume no packet space when
+   omitted.
+
+
+
+
+
+Lastname                Expires January 15, 2018                [Page 3]
+
+Internet-Draft     NDN and CCNx 1.0 Design Differences         July 2017
+
+
+3.1.2.  Name
+
+   CCNx 0.x defines a hierarchical naming structure, each component in a
+   name can be an arbitrary length sequence of zero or more bytes.
+   Encoding of the name follows the overall packet format, i.e.,
+   represented on wire as binary-encoded XML.
+
+   In addition to an explicitly defined sequence of name components, the
+   name of each Data packet includes an additional implicitly appended
+   name component: the implicit digest.  This component contains the raw
+   bytes of the SHA-256 digest of the entire ccnb-encoded Data.
+
+   CCNx 0.x also defines a set of naming conventions on how to encode
+   various information as part of the name, including binary data,
+   versions, segments, meta-data header, and commands.
+
+3.1.3.  Packet Types
+
+   CCNx 0.x defines two packet types: Interest and Data (also called
+   Content Object).
+
+   An *Interest* packet is used to request data by name.  The name can
+   be either a prefix, an exact, or a full name of the desired data to
+   be retrieved; if the name is a prefix, the Interest may carry
+   optional "selectors" to restrict which content is preferred when
+   multiple pieces of them all fall under the given prefix.
+
+   The name is defined as the only required element in an Interest
+   packet; other optional elements that an Interest may carry can be
+   sorted into the following categories:
+
+   o  a means for detecting duplicate Interest: "Nonce";
+
+   o  limiters on the Interest: "Scope", "InterestLifetime";
+
+   o  limiters on the answer: "AnswerOriginKind", "MinSuffixComponents",
+      "MaxSuffixComponents", "PublisherPublicKeyDigest", and "Exclude";
+
+   o  advisers on which piece of the multiple Data packets that all
+      satisfy the name carried in an Interest: "ChildSelector"
+      (leftmost, rightmost).
+
+   A *Data* packet is named piece of content that is immutable bound
+   together with a cryptographic signature.  The specific type of the
+   signature is defined as part of the "SignedInfo" field in form of OID
+   identifier.
+
+
+
+
+
+Lastname                Expires January 15, 2018                [Page 4]
+
+Internet-Draft     NDN and CCNx 1.0 Design Differences         July 2017
+
+
+   The structure of a Data packet is defined as "Signature", "Name",
+   "SignedInfo", and "Content".  The "Signature" fields carries
+   cryptographic digest and public key signature (plus "witness" for
+   special type of Merkle-tree group signature), computed over the rest
+   of the ccnb-encoded part of the packet.  The "SignedInfo" is allows
+   inclusion of:
+
+   o  "PublisherPublicKeyDigest": digest of the public key to verify the
+      signature;
+
+   o  "Timestamp": specially encoded timestamp value of when packet was
+      created;
+
+   o  "Type": three-byte identification of the payload with several
+      defined values, including DATA, ENCR, GONE, KEY/, LINK, and NACK;
+
+   o  "FreshnessSeconds": how many seconds a node should wait after the
+      arrival of this ContentObject before marking it as stale;
+
+   o  "FinalBlockID": the trailing name component in the last Data
+      packet of a sequence of fragments;
+
+   o  "KeyLocator": key bits or name of the public key to verify the
+      signature; and
+
+   o  "ExtOpt": carrier for any additional application-defined meta-
+      information.
+
+   CCNx 0.x defines a concept of Data packet staleness.  A newly
+   received (or re-retrieved) Data packet is considered "not stale" for
+   the duration limited by "FreshnessSeconds" (always not stale if Data
+   packet does not carry the field).  "Stale" content objects are still
+   valid data, but they are not eligible to be matched with Interests,
+   unless "answer may be stale" bit set in the Interest's
+   "AnswerOriginKind" element.
+
+3.1.4.  Forwarding Behavior
+
+   A CCNx 0.8 specification defines the following forwarder behavior for
+   processing of Interest and Data packets:
+
+   o  Interest Processing
+
+      *  Check if Nonce present, insert a random one if missing
+
+      *  Check if Nonce has been previously seen, drop Interest if so
+
+
+
+
+
+Lastname                Expires January 15, 2018                [Page 5]
+
+Internet-Draft     NDN and CCNx 1.0 Design Differences         July 2017
+
+
+      *  Lookup for a similar Interest in the Pending Interest
+         Table (PIT)
+
+         +  If found, aggregate the newly received Interest, unless PIT
+            is close to expiration; terminate processing
+
+      *  Lookup a matching Data in the local Content Store
+
+         +  If a match found, return the corresponding Data packet
+
+      *  Lookup the Forwarding Information Base (FIB)
+
+         +  If no matching FIB entry, drop the Interest and stop
+            processing
+
+         +  If found, record the Interest in the PIT state and lookup
+            previously observed data plane performance information
+            (e.g., for the prefix)
+
+         +  Forward the Interest using the forwarding strategy
+            mechanism, based on FIB order and (if found) observed data
+            plane performance info:
+
+   o  Data processing
+
+      *  Find all Interests in the PIT that the Data packet satisfies
+         according to the matching rules described above.
+
+      *  Forward the Data packet along each of those reverse paths, then
+         remove those PIT entries.
+
+      *  If it matched at least one PIT entry, put the Data packet in
+         the Content Store.
+
+   CCNx 0.8 codebase uses "two-best route then flood" strategy [4].
+   Each forwarder for each name prefix in its FIB keeps an estimate of
+   the round-trip time.  If an Interest goes unsatisfied longer than
+   this estimate, the forwarder either looks up the second best FIB
+   entry (if exists) and forwards the Interest there (first timeout) or
+   sends Interests to the remaining FIB entries (if any).  The intention
+   of this approach is to adaptively explore available paths and
+   retrieve Data, taking advantage of CCNx 0.8 design to prevent
+   Interest loops through PIT state and Nonce mechanisms.  The estimate
+   is initialized to a hard-coded value between 8 and 12 msec and uses
+   multiplicative increase multiplicative decrease approach with
+   constant 1/128 to adjust it after receiving Data (decrease to t =
+   0.992 * t) or upon timeout (increase to t = 1.125 t).  This means
+   that about every 8th Interest will trigger a timeout and sending on
+
+
+
+Lastname                Expires January 15, 2018                [Page 6]
+
+Internet-Draft     NDN and CCNx 1.0 Design Differences         July 2017
+
+
+   the second best path.  This infrequent use of the second best path
+   updates that path's RTT estimate.
+
+   The CCNx 0.x forwarder uses a set of flags on FIB entries called
+   Child Inherit and Forward Capture [cite NFD dev guide?].  By default,
+   the FIB matching takes a strict longest prefix matching approach.  If
+   the Child Inherit flag is set on a shorter prefix, it indicates that
+   shorter prefixes should be considered equally feasible as the longer
+   matching prefixes.  The Forward Capture flag on a shorter prefix
+   indicates that no longer prefix should be used (it avoids another
+   process from "capturing" the FIB entry by making a longer entry).
+   The use of these two flags has a strong interaction with the "two-
+   best route then flood" forwarding strategy, as they either expand or
+   contract the set of feasible routes used in Interest forwarding and
+   Interest timeout retransmission.
+
+3.2.  Summary of Changes
+
+3.2.1.  Protocol Changes Made by the NDN Team
+
+   Based on a common understanding of the inefficiency from ccnb packet
+   encoding used by CCNx 0.8, in 2013 NDN Team created, and subsequently
+   revised, a new NDN protocol specification [ndn-spec].  The new
+   version has kept the essential semantics and properties of the
+   original CCNx: flexibility in packet format encoding, support of
+   prefix match between interests and data packet to support in-network
+   name discovery, which is required in supporting data immutability as
+   consumers may not know the exact or full name of the desired data,
+   which may be produced in real time or even in response to the
+   Interest request.
+
+   The following list is a brief summary of the changes to CCNx 0.8 made
+   by the NDN specification.
+
+   *Semantics*:
+
+   o  Per-namespace forwarding strategy selection
+
+   o  to be added
+
+   *Encoding*:
+
+   o  The XML binary encoding is replaced by "Type-Length-Value" (TLV)
+      encoding, with "Type" and "Length" encoded using a flexible
+      1-3-5-8 octet encoding.
+
+   *Name*:
+
+
+
+
+Lastname                Expires January 15, 2018                [Page 7]
+
+Internet-Draft     NDN and CCNx 1.0 Design Differences         July 2017
+
+
+   o  Accordingly the encoding of names is changed to a two-level nested
+      TLV, outer TLV for a name and sub-TLVs for "typed" name components
+
+      *  Introduced several generic name component types, including
+         "GenericNameComponent" and "ImplicitSha256Digest".  The latter
+         to disambiguate the trailing implicit digest component in an
+         interest name.
+
+   o  As part of ongoing work, NDN team is working on
+
+      *  introducing other general-use name component types, such as
+         "Number", "Timestamp", and a few others
+
+      *  changes the Interest-Data matching semantics from matching one
+         interest to zero or multiple data packets (data matches all
+         pending interests with name that is prefix of data and
+         selectors are satisfied), to matching zero or the exact
+         interest which retrieved the data packet (through the use of an
+         "Interest Digest" mechanism).  Note that latter preserves
+         prefix match between interests and data
+
+   *Packet Types*
+
+   o  Added "Network NACK" (as part of NDNLP adaptation layer)
+
+   *Interest Packet*:
+
+   o  Changed "Nonce" from being optional to required to aid Interest
+      loop detection, in particular to facilitate more liberal use of
+      Interest multicast/broadcast in edge ad hoc environments where
+      network routing may or may not be used.
+
+   o  "PublisherPublicKeyDigest" is replaced by
+      "PublisherPublicKeyLocator"
+
+   o  Changed "AnswerOriginKind" from 4bits to a 1-bit "MustBeFresh"
+      selector
+
+   o  Removed "FaceID"
+
+   o  Changed "InterestLifetime" unit from second to milliseconds
+
+   o  Removed Bloom Filter from Exclude
+
+   o  Deleted deprecated "Scope" guider
+
+
+
+
+
+
+Lastname                Expires January 15, 2018                [Page 8]
+
+Internet-Draft     NDN and CCNx 1.0 Design Differences         July 2017
+
+
+   o  Changed default semantics of staleness: by default an interest may
+      retrieve any data packet with a matching name; if "MustBeFresh"
+      selector is enabled, routers must return non-stale matching data.
+
+   o  Introduced "ForwardingHint" concept to guide interest forwarding
+      when name cannot be used directly.
+
+   o  As part of ongoing research, NDN team is considering
+
+      *  the addition of a "Payload" field, with requirement for
+         applications to ensure name uniqueness for Interests carrying
+         different payload, e.g., by adding hash of the payload
+
+      *  the removal of Interest selectors including
+         "MinSuffixComponents", "MaxSuffixComponents",
+         "PublisherPublicKeyDigest", "ChildSelector" (leftmost,
+         rightmost), and "Exclude".
+
+   *Data Packet*:
+
+   o  The structure of Data packet is changed to "Name", "MetaInfo",
+      "Content", "Signature{SignatureInfo, SignatureValue}"
+
+   o  "PublisherPublicKeyDigest" and "ExtOpt" are removed.
+
+   o  "SignedInfo" is renamed to "MetaInfo" and its content was
+      refactored:
+
+      *  Three content types, ENCR, GONE, and NACK are removed
+
+      *  "Timestamp" is removed
+
+      *  "KeyLocator" is moved to be inside the "Signature"
+         ("SignatureInfo") block
+
+      *  "FreshnessSeconds" is renamed to "FreshnessPeriod" and is
+         expressed in units of milliseconds
+
+      *  "MetaInfo" now allowed to contain application-specific blocks,
+         e.g., to carry timestamp of data production.
+
+      *  "Timestamp" removed
+
+   o  As part of ongoing discussion, NDN team considering adding
+
+      *  an additional field outside security envelope to record time
+         the Data packet spend in in-network caches (to streamline
+         freshness/stale in-network storage semantics)
+
+
+
+Lastname                Expires January 15, 2018                [Page 9]
+
+Internet-Draft     NDN and CCNx 1.0 Design Differences         July 2017
+
+
+   *Signature*:
+
+   o  "Signature" is moved to the end of Data packet.
+
+   o  "KeyLocator" is moved to be a part of the "SignatureInfo" block
+      and made signature-specific.
+
+   o  Signature type (or signing method information) is expressed as an
+      assigned integer value (with no assumed default), rather than OID.
+
+   o  Added support for hash-only "signature"
+
+   o  Introduction support of new types of signatures, including
+      "SignatureSha256WithEcdsa" (Elliptic Curve Digital Signature
+      Algorithm) and "SignatureHmacWithSha256" (hash-based packet
+      authentication code)
+
+   o  "KeyLocatorDigest" renamed to "KeyDigest"
+
+3.2.2.  CCNx 1.0 Changes
+
+   In the beginning of 2013, PARC team has undertaken a significant
+   revision of CCNx (CCNx 1.0), refactoring the protocol behavior and
+   packet format.
+
+   The following list is a high-level summary of the changes.
+
+   *Semantics*
+
+   o  The semantics of data retrieval got constrained to retrieval by
+      "exact" or "full" names only.  The advantage of this change is
+      significant simplification of the forwarding process, allowing
+      various hardware and software optimization techniques (?cite?).
+      At the same time, the communication using the constrained
+      semantics requires additional mechanism and semantics changes.
+      The full (and some exact) names must be explicitly communicated to
+      the consumers by an out-of-band (e.g., an application-level name
+      discovery, such as manifests and directory service) mechanisms.
+      To bootstrap these mechanism required changes of "immutable data"
+      semantics: the same name need to be associated with different
+      content at different times with time-dependency on the network
+      routers to removing "old" versions from the network.
+
+   o  Interest aggregation
+
+   o  Data packet semantics changed from fresh/stale to alive/dead:
+      added a requirement on in-network caches to stop serving data for
+
+
+
+
+Lastname                Expires January 15, 2018               [Page 10]
+
+Internet-Draft     NDN and CCNx 1.0 Design Differences         July 2017
+
+
+      interests after producer-defined time ("time-dependent"
+      immutability)
+
+   *Encoding*:
+
+   o  The XML binary encoding replaced with "Type-Length-Value" (TLV)
+      encoding, with "Type" and "Length" encoded using a fixed 2-octet
+      encoding.  A separate specialized IoT version (requires
+      translation) of CCNx 1.0 (?cite?) added a 1-octet encoding of
+      combined T-V fields.
+
+   *Name*:
+
+   o  Name changed to be a two-level nested TLV, outer TLV and "typed"
+      name components sub-TLVs
+
+   o  Introduced free-to-define name component types
+
+   o  Implicit digest changed from being a part of the name (implicitly
+      added name component, ensuring uniqueness of the full name) to be
+      an independent identifier that can be used as part of "hash
+      restriction".
+
+   *Packet Types*
+
+   o  Added "InterestReturn" packet
+
+   *Interest Packet*
+
+   o  Introduced a "fixed" common header, with optional TLV-encoded hop-
+      by-hop headers (not covered by signature), followed by TLV-encoded
+      Interest packet.
+
+   o  Introduced "HopLimit" (as part of fixed header)
+
+   o  "Nonce" removed (killing loops via HopLimit, no detection of
+      loops)
+
+   o  "MinSuffixComponents", "MaxSuffixComponents", "Exclude", and
+      "ChildSelector" selectors removed (as a consequence of the data
+      retrieval semantics change)
+
+   o  "AnswerOriginKind" selector removed, as a consequence of data
+      packet semantics change
+
+   o  "PublisherPublicKeyDigest" selector replaced with KeyId
+      restriction
+
+
+
+
+Lastname                Expires January 15, 2018               [Page 11]
+
+Internet-Draft     NDN and CCNx 1.0 Design Differences         July 2017
+
+
+   o  "Scope" removed (replaced with HopLimit)
+
+   o  "FaceID" removed
+
+   o  Added optional "Payload" field
+
+   *Data Packet*
+
+   o  Introduced a "fixed" common header, with optional TLV-encoded hop-
+      by-hop headers (not covered by signature), followed by TLV-encoded
+      Interest packet.
+
+   o  Introduced concept of "nameless" objects, which are identified
+      only by their implicit digest
+
+   o  Added timestamp after which packet cannot satisfy interests
+
+   o  "FinalBlockID" ?
+
+   *Signature*:
+
+   o  to be added
+
+4.  Discussion of Individual Architecture & Design Commonalities and
+    Differences per NDN and CCNx 1.0 Development paths
+
+4.1.  Packet Structure
+
+   In general, ICN packets require for the following three components
+   (some optional) with semantic differences:
+
+   o  (required) ICN information layer (message).
+
+      This layer need to include elements that are necessary to describe
+      requests for the data and to describe and secure the data, such as
+      data name, data name constraints, payload, security context,
+      security context constraint, etc.
+
+   o  (optional) Network adaptation layer
+
+      This layer define elements that needed to assist information-layer
+      packet forwarding in a specific network environment (across
+      multiple hops).  Examples of such elements could include ...
+
+   o  (optional) Link adaptation layer
+
+      This layer defines mechanisms to deliver messages with optional
+      network adaptation elements across specific links.  For example,
+
+
+
+Lastname                Expires January 15, 2018               [Page 12]
+
+Internet-Draft     NDN and CCNx 1.0 Design Differences         July 2017
+
+
+      for small-MTU links, link adaptation can define fragmentation
+      elements (cite?); for lossy links, hop-by-hop recovery mechansms
+      (cite?), etc.
+
+   *NDN*
+
+   The NDN packet specification defines information-layer packets,
+   including some of the elements that potentially belong to the network
+   adaptation layer.  There is an ongoing discussion to reorganizing the
+   defined packet format to clearly separate information- and network
+   adaptation layer elements.
+
+   A set of companion specifications (NDNLP [cite?], lora [cite?])
+   defined link adaptation elements, including hop-by-hop fragmentation,
+   packet recovery, congestion information gathering, geo-tags, etc.
+
+   ... some elements in NDNLP potentially belong to different layers and
+   NDN Team is considering restructuring ...
+
+   *CCNx 1.0*
+
+   CCNx 1.0 specification defines a single packet structure consisting
+   of four section, incorporating elements of ICN information, network
+   adaption, and link adaptation layers:
+
+   o  Fixed header
+
+      A fixed length header that specifies a forwarder behavior
+      (PacketType), the total packet length, the header length, and has
+      a small amount of space for per-PacketType fields.
+
+   o  Per-hop headers
+
+      A list of TLVs that are outside the signature envelope and are
+      thus mutable.  These are used for network layer adaptation (see
+      next item) or fields that need to change in flight, such as a
+      remaining lifetime field.
+
+   o  Message
+
+      A TLV container for a Content Object or an Interest or an Interest
+      Return.
+
+   o  Validation
+
+      This is two TLV blocks, one that contains information about the
+      validation, such as keyid and signing parameters like the crypto
+      suite, and another that has the actual signature.  The signature
+
+
+
+Lastname                Expires January 15, 2018               [Page 13]
+
+Internet-Draft     NDN and CCNx 1.0 Design Differences         July 2017
+
+
+      covers the CCNx message and the first block of the validation
+      section.
+
+4.2.  Packet Encoding
+
+   *NDN*
+
+   NDN packet is encoded as a pure TLV encoding using a flexible
+   1-3-5-9-octet format for "Type" and "Length" fields.
+
+   Advantages:
+
+   o  The objective of the flexible encoding format is to ensure the
+      same packet format can be used in all possible network
+      environments, including very constrained IoT and high-performance
+      unconstrained networks, without requiring translation gateways.
+
+   Potential drawbacks:
+
+   o  More complex processing (direct interpretation of wire-format
+      bytes)
+
+   o  More complex packet generation (optimal implementation of packet
+      allocation require packet size estimation and backward-direction
+      encoding)
+
+   o  Number aliasing, if implementations do not enforce the smallest-
+      encoding restriction imposed by the NDN's TLV specification.
+
+   *CCNx 1.0*
+
+   As highlighted above, different parts of the CCNx 1.0 packet use
+   different type of encoding:
+
+   o  the common fixed header is defined as 8 octets that can be
+      followed by one or more hop-by-hop headers.  The dedicated header
+      length field determines the hop-by-hop header space in the "fixed"
+      header.
+
+   o  hop-by-hop headers, message, and validation fields are encoded
+      using TLV encoding with a fixed 2-octet encoding for "Type" and
+      "Length" fields.
+
+   Advantages:
+
+   o  No number aliasing possible, as the encoding is fixed
+
+   o  Simplified processing
+
+
+
+Lastname                Expires January 15, 2018               [Page 14]
+
+Internet-Draft     NDN and CCNx 1.0 Design Differences         July 2017
+
+
+   o  Simplified packet generation (still require packet size
+      estimation, but allow both forward and backward encoding)
+
+   Potential drawbacks:
+
+   o  Can encode numbers only up to 65,535, which can be limiting factor
+      for L field in high-performance networks and for T field when
+      assigning custom fields.
+
+   o  Inefficient bit-wise because many fields are under 255 bytes
+
+   o  Need for specialized encoding [5] and/or compression mechanisms
+      [6] to use in highly MTU-constrained networks (802.15.4, LoRaWAN,
+      etc.)
+
+4.3.  Naming
+
+   The naming structure of NDN and CCNx 1.0 is almost equivalent, as
+   both define name as a set of typed name components.  The only
+   difference is interpretation of the name in relation to the data
+   packet:
+
+   o  Name of NDN data packet implicitly includes the digest as a last
+      component.  This makes data name to have at least one
+      (ImplicitSha256Digest) component when producer set "ndn:/" as the
+      data packet's name ("Name" field is required in both Interest and
+      Data packet)
+
+   o  CCNx 1.0 does not include the digest as a last component, but
+      allows the data packet digest to be used as the sole identifier of
+      the data packet, as part of "hash restriction".  In addition to
+      that, CCNx 1.0 makes "Name" an optional field in data packet,
+      differentiating packet with "ccnx:/" name and packet with omitted
+      "Name" field (so called nameless objects).
+
+4.4.  Data Retrieval
+
+   *NDN*
+
+   Data can be retrieved by full, exact, and prefix name.  NDN includes
+   an assumption that exact names are not intentionally reused by
+   different data
+
+   Selector support
+
+   o  As a temporary mechanism to implement in-network name discovery
+
+   o  Open research for the adequate replacement
+
+
+
+Lastname                Expires January 15, 2018               [Page 15]
+
+Internet-Draft     NDN and CCNx 1.0 Design Differences         July 2017
+
+
+   "FreshnessPeriod" in Data packets as a relative time to treat Data
+   "fresh" for discovery purposes
+
+   *NDN*
+
+   Talk about: Name based scoping using a set of naming conventions,
+   including "/localhost" and "/localhop"
+
+   *Similar Interest Aggregation*
+
+   Exponential-back off interval to allow interest retransmission
+
+   *CCNx 1.0*
+
+   Data can be retrieved only using full or exact name.
+
+   App-defined name discovery:
+
+   o  Manifests for static data
+
+   o  Encoding Selectors as part of the Interest name
+
+   *Similar Interest Aggregation*
+
+   CCNx 1.0 recommends this interest aggregation algorithm:
+
+   o  Two Interests are considered "similar" if they have the same
+      "Name", "KeyIdRestr", and "ObjHashRestr".
+
+   o  Let the notional value InterestExpiry (a local value at the
+      forwarder) be equal to the receive time plus the InterestLifetime
+      (or a platform-dependent default value if not present).
+
+   o  An Interest record (PIT entry) is considered invalid if its
+      InterestExpiry time is in the past.
+
+   o  The first reception of an Interest must be forwarded, within the
+      ability of the system.
+
+   o  A second or later reception of an Interest similar to a valid
+      pending Interest from the same previous hop MUST be forwarded.  We
+      consider these a retransmission requests.
+
+   o  A second or later reception of an Interest similar to a valid
+      pending Interest from a new previous hop MAY be aggregated (not
+      forwarded).
+
+
+
+
+
+Lastname                Expires January 15, 2018               [Page 16]
+
+Internet-Draft     NDN and CCNx 1.0 Design Differences         July 2017
+
+
+   o  Aggregating an Interest MUST extend the InterestExpiry time of the
+      Interest record.  An implementation MAY keep a single
+      InterestExpiry time for all previous hops or MAY keep the
+      InterestExpiry time per previous hop.  In the first case, the
+      forwarder might send a ContentObject down a path that is no longer
+      waiting for it, in which case the previous hop (next hop of the
+      Content Object) would drop it.
+
+4.5.  Opportunistic In-Network Caching
+
+   Both protocols include ability to cache each forwarded data packet
+   with forwarded-defined policies
+
+   *NDN*
+
+   "Fresh"/"stale" semantics for the cached data (CS can keep stale
+   packet and satisfy Interests that do not request "fresh" data)
+
+   *CCNx 1.0*
+
+   alive/dead semantics: Requirement that CS cannot use "dead" data to
+   satisfy interests (current spec only) CS alive/dead decision requires
+   absolute time synchronization within required discovery resolution
+   Requirement for Cache verification: if Interest specifies
+   KeyRestriction, cache cannot satisfy the interest without
+   verification
+
+4.6.  Forwarding Loop Management
+
+   *NDN*
+
+   ...NDN assumes networks without guarantees for loopless routing
+   (assumes that routing either don't exist or have high chance to
+   result in looping paths)...
+
+   PIT state to stop the interest from forwarding
+
+   "Nonce" to detect potentially duplicated interests with ability to
+   prune "duplicate" paths
+
+   "HopLimit" to kill interest loops in special cases
+
+   *CCNx 1.0*
+
+   CCNx 1.0 uses a HopLimit field in the fixed header of Interest
+   packets.  This field restricts an Interest to at most 255 hops, so a
+   loop will eventually terminate.  An Interest loop would likely
+   terminate faster than that because once it completes its first cycle
+
+
+
+Lastname                Expires January 15, 2018               [Page 17]
+
+Internet-Draft     NDN and CCNx 1.0 Design Differences         July 2017
+
+
+   it would either find a Pending Interest Table entry that aggregates
+   it (suppressing forwarding it) or it finds a ContentStore entry that
+   satisfies it.  The vulnerability to longer loops occurs when PIT
+   entries get satisfied faster than the loop period and the Content
+   Object is either not cachable or a node has no cache or its cache
+   entry gets evicted too fast.
+
+   CCNx 1.0 also recommends decrementing the Interest Lifetime by an
+   appropriate amount at each hop, which also serves to limit looping.
+
+   CCNx 1.0 assumes that routing protcocols produce routes without
+   permanent loops.
+
+   *Uses of HopLimit*
+
+   An option to scope interest forwarding using HopLimit field.  CCNx
+   1.0 informally maintains the CCNx 0.x conventions of /localhost, but
+   that convention is not in the standard.
+
+   CCNx 1.0 has not adopted a /localhop convention because it can be
+   achieved via the HopLimit.  We also believe that each link should be
+   uniquely named to avoid confusion in the FIB and ContentStore.
+   Clearly, /localhop prefixed names cannot use FIB forwarding and they
+   cannot be stored in a common ContentStore.
+
+   https://tools.ietf.org/html/draft-mosko-icnrg-ccnxfragmentation-01
+
+4.7.  Data-Centric Security
+
+   *NDN*
+
+   o  Exploring signature formats: RSA, ECDSA, HMAC
+
+   o  Command (Signed) Interests
+
+   o  Trust schema
+
+   o  Name based access control
+
+   *CCNx 1.0*
+
+   There is one packet envelope with optional Validation on both
+   Interest and Content Validation can be a MIC, MAC, or Signature.  We
+   allow formats like a CRC, an HMAC, Elliptical Curve, and RSA.  We
+   also allow unsigned packets, which are used when trust is achieved
+   via hash chains from a previously signed packet.
+
+
+
+
+
+Lastname                Expires January 15, 2018               [Page 18]
+
+Internet-Draft     NDN and CCNx 1.0 Design Differences         July 2017
+
+
+   Validation only covers the Message and the ValidationAlg, not the
+   optional headers or fixed header.
+
+   CCNx 1.0 allows signing Interests.  This is usually to allow a CRC on
+   Interest to protect against in-network corruption.  However, the
+   Interest may be signed via a stronger signature within an application
+   usage.  CCNx does not recommend signing or processing signed Interest
+   when the application protocol is not expecting such, as this is a
+   computational denial of service vector.
+
+   The CCNx KeyExchange (CCNxKE) protocol (see
+   https://tools.ietf.org/html/draft-wood-icnrg-ccnxkeyexchange-01) is
+   an on-line key exchange protocol similar to TLS 1.3 to negotiate
+   encryption keys.  We believe this form of session security is
+   intrinsically useful and should be supported within an ICN, even
+   though other forms of off-line publishing encryption may be used in
+   other cases.
+
+4.8.  Fragmentation
+
+   Both NDN and CCNx use hop-by-hop fragmentation, though the specific
+   details on the fragmentation protocol differ.
+
+4.9.  Indirect Data Retrieval
+
+   *NDN*
+
+   Forwarding Hint
+
+   *CCNx 1.0*
+
+   Special handling of Data packets that do not include "Name" field
+   (=retrieved using data digest)
+
+   Data is matched against "restriction" field; name is completely
+   ignored
+
+5.  Security Considerations
+
+   ...
+
+6.  Acknowledgements
+
+   ...
+
+
+
+
+
+
+
+Lastname                Expires January 15, 2018               [Page 19]
+
+Internet-Draft     NDN and CCNx 1.0 Design Differences         July 2017
+
+
+7.  IANA Considerations
+
+   This document includes no request to IANA.
+
+8.  References
+
+8.1.  Normative References
+
+   [I-D.wissingh-icnrg-terminology]
+              Wissingh, B., cwood@parc.com, c., Zhang, L., Afanasyev,
+              A., and D. Oran, "Information-Centric Networking:
+              Terminology", draft-wissingh-icnrg-terminology-00 (work in
+              progress), July 2016.
+
+   [ndn-spec]
+              NDN Team, "NDN Packet Format Specification 0.2-2
+              documentation", June 2017.
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+8.2.  URIs
+
+   [1] http://www.ccnx.org/395/1/van-jacobsen-at-google/
+
+   [2] https://named-data.net/wp-content/uploads/2016/08/NDN-IPR.pdf
+
+   [3] https://named-data.net/project/ndn-design-principles/
+
+   [4] https://redmine.named-data.net/projects/nfd/wiki/CcndStrategy
+
+   [5] https://www.ietf.org/mail-archive/web/icnrg/current/
+       pdfs9ieLPWcJI.pdf
+
+   [6] https://www.ietf.org/proceedings/94/slides/slides-94-icnrg-0.pdf
+
+Author's Address
+
+   Firstname Lastname
+   Affiliation
+   Address
+   City  ZipCode
+   Country
+
+   EMail: email
+   URI:   homepage
+
+
+
+
+
+Lastname                Expires January 15, 2018               [Page 20]
