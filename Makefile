@@ -20,10 +20,10 @@ build/%.xml: %.md build/template.xml
 	pandoc -t docbook -s $< | xsltproc --nonet transform.xsl - > $@
 
 $(NAME)-$(REVISION).txt: $(addprefix build/,$(SOURCES:.md=.xml))
-	xml2rfc -o $@ --text build/template.xml
+	(cd build; xml2rfc -o ../$@ --text template.xml)
 
 $(NAME)-$(REVISION).html: $(addprefix build/,$(SOURCES:.md=.xml))
-	xml2rfc -o $@ --html build/template.xml
+	(cd build; xml2rfc -o ../$@ --html template.xml)
 
 clean:
 	rm -Rf build $(NAME)-$(REVISION).*
